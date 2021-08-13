@@ -3,29 +3,31 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-let _VER = '1.1.0'
+if(!lxl.checkVersion(0,3,0))
+    throw new Error("【加载失败】\nLXL版本过旧！请升级你的LXL版本到0.3.0及以上再使用此插件");
 
+let _VER = '1.1.0'
 let _HasConfirmed = 1;
 
-mc.regPlayerCmd("stop","关闭服务器",function(args){
+mc.regPlayerCmd("stop","关闭服务器",function(pl,args){
     if(pl.getExtraData("_SERVER_STOPPER_STATUS") == _HasConfirmed)
     {
-        pl.tell("停服命令执行成功");
+        pl.tell("停服命令执行成功",1);
         mc.broadcast("玩家" + pl.realName + "执行停服命令。服务器将在5秒之后关闭");
-        setTimeout(function(){mc.runcmd("stop");},5000);
+        setTimeout(function(){ mc.runcmd("stop"); },5000);
         pl.setExtraData("_SERVER_STOPPER_STATUS",null);
     }
     else
     {
-        pl.tell("你真的确定要停服吗？请再次执行/stop确认");
+        pl.tell("你真的确定要停服吗？请再次执行/stop确认",1);
         pl.setExtraData("_SERVER_STOPPER_STATUS",_HasConfirmed);
     }
 },1);
 
-mc.listen("onPlayerCmd",function(player,cmd){
-    if(pl.getExtraData("_SERVER_STOPPER_STATUS") == _HasConfirmed)
+mc.listen("onPlayerCmd",function(pl,cmd){
+    if(cmd != "stop" && pl.getExtraData("_SERVER_STOPPER_STATUS") == _HasConfirmed)
     {
-        pl.tell("确认失败。你的停服命令已被取消");
+        pl.tell("确认失败。你的停服命令已被取消",1);
         pl.setExtraData("_SERVER_STOPPER_STATUS",null);
     }
 });
