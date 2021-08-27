@@ -3,10 +3,10 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-//if(!lxl.checkVersion(0,3,2))
-//    throw new Error("【加载失败】\nLXL版本过旧！请升级你的LXL版本到0.3.2及以上再使用此插件");
+if(!lxl.checkVersion(0,5,0))
+    throw new Error("【加载失败】\nLXL版本过旧！请升级你的LXL版本到0.5.0及以上再使用此插件");
 
-let _VER = '1.0.0'
+let _VER = '1.2.0'
 
 logger.setTitle("NbtDbg");
 logger.setConsole(true);
@@ -15,7 +15,7 @@ logger.setConsole(true);
 mc.listen("onUseItem",function(pl,item){
     if(pl.getExtraData("_NBTDBG_IS_ENABLED") != null)
     {
-        let str=item.getNbt().toString();
+        let str=item.getNbt().toSNBT();
         pl.tell(str,0);
         logger.log("\n"+str);
     }
@@ -25,7 +25,7 @@ mc.listen("onUseItem",function(pl,item){
 mc.listen("onStartDestroyBlock",function(pl,bl){
     if(pl.getExtraData("_NBTDBG_IS_ENABLED") != null)
     {
-        let str=bl.getNbt().toString();
+        let str=bl.getNbt().toSNBT();
         pl.tell(str,0);
         logger.log("\n"+str);
     }
@@ -35,9 +35,31 @@ mc.listen("onStartDestroyBlock",function(pl,bl){
 mc.listen("onAttack",function(pl,ac){
     if(pl.getExtraData("_NBTDBG_IS_ENABLED") != null)
     {
-        let str=ac.getNbt().toString();
+        let str=ac.getNbt().toSNBT();
         pl.tell(str,0);
         logger.log("\n"+str);
+    }
+});
+
+//BlockEntity
+mc.listen("onJump",function(pl){
+    if(pl.getExtraData("_NBTDBG_IS_ENABLED") != null)
+    {
+        let pos=pl.pos;
+        pos.y-=1;
+        let block=mc.getBlock(Math.floor(pos.x),Math.floor(pos.y),Math.floor(pos.z),pos.dimid);
+        if(!block.hasBlockEntity())
+        {
+            pos.y+=1;
+            block=mc.getBlock(Math.floor(pos.x),Math.floor(pos.y),Math.floor(pos.z),pos.dimid);
+        }
+        if(block != null && block != undefined && block.hasBlockEntity())
+        {
+            let be = block.getBlockEntity();
+            let str=be.getNbt().toSNBT();
+            pl.tell(str,0);
+            logger.log("\n"+str);
+        }
     }
 });
 
@@ -45,7 +67,7 @@ mc.listen("onAttack",function(pl,ac){
 mc.listen("onSneak",function(pl,is){
     if(pl.getExtraData("_NBTDBG_IS_ENABLED") != null && is)
     {
-        let str=pl.getNbt().toString();
+        let str=pl.getNbt().toSNBT();
         pl.tell(str,0);
         logger.log("\n"+str);
     }

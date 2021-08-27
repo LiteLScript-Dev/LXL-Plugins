@@ -69,8 +69,8 @@
             "NoOutputContent": []
         },
         "onTakeItem": {
-            "LogToFile": 0,
-            "LogToConsole": 0,
+            "LogToFile": 1,
+            "LogToConsole": 1,
             "NoOutputContent": []
         },
         "onDropItem": {

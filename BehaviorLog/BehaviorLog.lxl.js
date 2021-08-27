@@ -3,8 +3,9 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '2.0.1';
+var _VER = '2.0.3';
 var _CONFIG_PATH = './plugins/BehaviorLog/config.json';
+var _SHOW_ERROR_INFO = false;
 
 var _DEFAULT_CONFIG_FILE = String.raw
 `{
@@ -78,8 +79,8 @@ var _DEFAULT_CONFIG_FILE = String.raw
             "NoOutputContent": []
         },
         "onTakeItem": {
-            "LogToFile": 0,
-            "LogToConsole": 0,
+            "LogToFile": 1,
+            "LogToConsole": 1,
             "NoOutputContent": []
         },
         "onDropItem": {
@@ -262,7 +263,7 @@ function GetTodayLogPath() {
 var lastDay = system.getTimeObj().D;
 var nowLogPath = GetTodayLogPath();
 if (!file.exists(nowLogPath))
-    file.writeLine(nowLogPath, '\ufeff时间,维度,主体,x,y,z,事件,目标,x,y,z,附加信息');
+    file.writeLine(nowLogPath, '\ufeff时间,维度,主体,X,Y,Z,事件,目标,x,y,z,附加信息');
 
 setInterval(function () {
     if (lastDay != system.getTimeObj().D) {
@@ -270,7 +271,7 @@ setInterval(function () {
         lastDay = system.getTimeObj().D;
         nowLogPath = GetTodayLogPath();
         if (!file.exists(nowLogPath))
-            file.writeLine(nowLogPath, '\ufeff时间,维度,主体,x,y,z,事件,目标,x,y,z,附加信息');
+            file.writeLine(nowLogPath, '\ufeff时间,维度,主体,X,Y,Z,事件,目标,x,y,z,附加信息');
     }
 }, 30000);
 
@@ -334,6 +335,13 @@ function writeLog(logToFile, logToConsole, NoOutputContent, event, dim, doer, dx
     }
 }
 
+//导出接口
+function writeLogExported(event,dim,doer,dx,dy,dz,target,tx,ty,tz,notes,logToConsole,logToFile)
+{
+    writeLog(logToFile,logToConsole,[],event,dim,doer,dx,dy,dz,target,tx,ty,tz,notes);
+}
+lxl.export(writeLogExported,"BehaviorLog_WriteLog");
+
 //监控部分
 var settings = conf.Settings;
 
@@ -347,7 +355,9 @@ if (settings.onPreJoin.LogToFile || settings.onPreJoin.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "开始进服", '', pl.name, '', '', '', '', '', '', '', 'xuid=' + pl.xuid);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -362,7 +372,9 @@ if (settings.onJoin.LogToFile || settings.onJoin.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "进入服务器", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', 'xuid=' + pl.xuid);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -376,7 +388,9 @@ if (settings.onLeft.LogToFile || settings.onLeft.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "离开服务器", '', pl.name, '', '', '', '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -391,7 +405,9 @@ if (settings.onRespawn.LogToFile || settings.onRespawn.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "重生", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -406,7 +422,9 @@ if (settings.onPlayerDie.LogToFile || settings.onPlayerDie.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "玩家死亡", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -421,7 +439,9 @@ if (settings.onPlayerCmd.LogToFile || settings.onPlayerCmd.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "玩家执行命令", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -436,7 +456,9 @@ if (settings.onChat.LogToFile || settings.onChat.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "聊天", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), msg, '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -459,7 +481,9 @@ if (settings.onChangeDim.LogToFile || settings.onChangeDim.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "切换维度", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '前往' + dimName, '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -474,7 +498,9 @@ if (settings.onJump.LogToFile || settings.onJump.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "跳跃", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -490,7 +516,9 @@ if (settings.onSneak.LogToFile || settings.onSneak.LogToConsole) {
                 writeLog(logToFile, logToConsole, noOutputContent,
                     "潜行", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -504,9 +532,11 @@ if (settings.onAttack.LogToFile || settings.onAttack.LogToConsole) {
             let pos = pl.pos;
             let acPos = ac.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "攻击", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac.name, acPos.x.toFixed(0), acPos.y.toFixed(0), acPos.z.toFixed(0), `使用物品：${pl.getHand().name}`);
+                "攻击", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac.name, acPos.x.toFixed(0), acPos.y.toFixed(0), acPos.z.toFixed(0), `使用物品：${pl.getHand().name} 类型：${pl.getHand().type}`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -519,9 +549,11 @@ if (settings.onUseItem.LogToFile || settings.onUseItem.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', '');
+                "使用物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `类型：${it.type}`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -539,9 +571,11 @@ if (settings.onUseItemOn.LogToFile || settings.onUseItemOn.LogToConsole) {
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用物品点击", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "使用物品点击方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `使用物品：${it.name} 类型：${it.type}`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -550,14 +584,16 @@ if (settings.onTakeItem.LogToFile || settings.onTakeItem.LogToConsole) {
     let logToFile = settings.onTakeItem.LogToFile;
     let logToConsole = settings.onTakeItem.LogToConsole;
     let noOutputContent = settings.onTakeItem.NoOutputContent;
-    mc.listen("onTakeItem", function (pl, en) {
+    mc.listen("onTakeItem", function (pl, en, it) {
         try {
             let enPos = en.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "捡起物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), enPos.x.toFixed(0), enPos.y.toFixed(0), enPos.z.toFixed(0), '');
+                "捡起物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, enPos.x.toFixed(0), enPos.y.toFixed(0), enPos.z.toFixed(0), `${it.count}个`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -572,7 +608,9 @@ if (settings.onDropItem.LogToFile || settings.onDropItem.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "丢出物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `${it.count}个`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -587,7 +625,9 @@ if (settings.onEat.LogToFile || settings.onEat.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "食用食物", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -603,7 +643,9 @@ if (settings.onStartDestroyBlock.LogToFile || settings.onStartDestroyBlock.LogTo
             writeLog(logToFile, logToConsole, noOutputContent,
                 "开始破坏方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -619,7 +661,9 @@ if (settings.onDestroyBlock.LogToFile || settings.onDestroyBlock.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "破坏方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -644,7 +688,9 @@ if (settings.onPlaceBlock.LogToFile || settings.onPlaceBlock.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "放置方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -660,7 +706,9 @@ if (settings.onOpenContainer.LogToFile || settings.onOpenContainer.LogToConsole)
             writeLog(logToFile, logToConsole, noOutputContent,
                 "打开容器", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -676,7 +724,9 @@ if (settings.onCloseContainer.LogToFile || settings.onCloseContainer.LogToConsol
             writeLog(logToFile, logToConsole, noOutputContent,
                 "关闭容器", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -699,7 +749,9 @@ if (settings.onInventoryChange.LogToFile || settings.onInventoryChange.LogToCons
                 writeLog(logToFile, logToConsole, noOutputContent,
                     "物品栏 放入物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -721,7 +773,9 @@ if (settings.onSetArmor.LogToFile || settings.onSetArmor.LogToConsole) {
                 writeLog(logToFile, logToConsole, noOutputContent,
                     "盔甲栏 放入物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -736,7 +790,9 @@ if (settings.onUseRespawnAnchor.LogToFile || settings.onUseRespawnAnchor.LogToCo
             writeLog(logToFile, logToConsole, noOutputContent,
                 "使用重生锚", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:respawn_anchor', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -751,7 +807,9 @@ if (settings.onOpenContainerScreen.LogToFile || settings.onOpenContainerScreen.L
             writeLog(logToFile, logToConsole, noOutputContent,
                 "打开容器UI", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -769,7 +827,9 @@ if (settings.onMobDie.LogToFile || settings.onMobDie.LogToConsole) {
                     "生物死亡", pos.dim, mob.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由于${source.name}的攻击`);
             }
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -784,7 +844,9 @@ if (settings.onMobHurt.LogToFile || settings.onMobHurt.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "生物受伤", pos.dim, mob.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `受到来自${source.name}的${damage}点伤害`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -798,7 +860,9 @@ if (settings.onExplode.LogToFile || settings.onExplode.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "爆炸", pos.dim, source.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -813,7 +877,9 @@ if (settings.onProjectileHitEntity.LogToFile || settings.onProjectileHitEntity.L
             writeLog(logToFile, logToConsole, noOutputContent,
                 "弹射物击中", pos.dim, source.name, '', '', '', entity.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -828,7 +894,9 @@ if (settings.onWitherBossDestroy.LogToFile || settings.onWitherBossDestroy.LogTo
             writeLog(logToFile, logToConsole, noOutputContent,
                 "凋零破坏", pos.dim, witherBoss.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `破坏从${Pos2String(AAbb)}到${Pos2String(aaBB)}的方块`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -844,7 +912,9 @@ if (settings.onRide.LogToFile || settings.onRide.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "生物骑乘", pos.dim, ac1.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac2.name, pos2.x.toFixed(0), pos2.y.toFixed(0), pos2.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -860,7 +930,9 @@ if (settings.onStepOnPressurePlate.LogToFile || settings.onStepOnPressurePlate.L
             writeLog(logToFile, logToConsole, noOutputContent,
                 "踩踏压力板", pos.dim, ac.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), plate.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -876,7 +948,9 @@ if (settings.onBlockInteracted.LogToFile || settings.onBlockInteracted.LogToCons
             writeLog(logToFile, logToConsole, noOutputContent,
                 "方块接受玩家互动", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -890,7 +964,9 @@ if (settings.onBedExplode.LogToFile || settings.onBedExplode.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "床爆炸", pos.dim, "minecraft:bed", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -904,7 +980,9 @@ if (settings.onRespawnAnchorExplode.LogToFile || settings.onRespawnAnchorExplode
             writeLog(logToFile, logToConsole, noOutputContent,
                 "重生锚爆炸", pos.dim, "minecraft:respawn_anchor", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由${pl.name}引起`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -919,7 +997,9 @@ if (settings.onBlockExploded.LogToFile || settings.onBlockExploded.LogToConsole)
             writeLog(logToFile, logToConsole, noOutputContent,
                 "方块被爆炸破坏", pos.dim, bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由${source.name}引起的爆炸`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -933,7 +1013,9 @@ if (settings.onCmdBlockExecute.LogToFile || settings.onCmdBlockExecute.LogToCons
             writeLog(logToFile, logToConsole, noOutputContent,
                 "命令方块执行", pos.dim, "minecraft:command_block", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -954,7 +1036,9 @@ if (settings.onContainerChange.LogToFile || settings.onContainerChange.LogToCons
                 writeLog(logToFile, logToConsole, noOutputContent,
                     "向容器放入物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `向第${slotNum}号槽 放入${newItem.count}个 ${newItem.name}`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -969,7 +1053,9 @@ if (settings.onProjectileHitBlock.LogToFile || settings.onProjectileHitBlock.Log
             writeLog(logToFile, logToConsole, noOutputContent,
                 "弹射物击中", pos.dim, source.name, '', '', '', bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -984,7 +1070,9 @@ if (settings.onRedStoneUpdate.LogToFile || settings.onRedStoneUpdate.LogToConsol
             writeLog(logToFile, logToConsole, noOutputContent,
                 "红石更新", pos.dim, bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', isActive ? '激活 红石等级' + level : '熄灭');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -998,7 +1086,9 @@ if (settings.onHopperPushOut.LogToFile || settings.onHopperPushOut.LogToConsole)
             writeLog(logToFile, logToConsole, noOutputContent,
                 "漏斗（矿车）输出物品", pos.dim, "Hopper", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -1014,7 +1104,9 @@ if (settings.onPistonPush.LogToFile || settings.onPistonPush.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "活塞推动", pos.dim, pis.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -1029,7 +1121,9 @@ if (settings.onFarmLandDecay.LogToFile || settings.onFarmLandDecay.LogToConsole)
             writeLog(logToFile, logToConsole, noOutputContent,
                 "破坏耕地", pos.dim, ac.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:farm_land', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -1045,7 +1139,9 @@ if (settings.onUseFrameBlock.LogToFile || settings.onUseFrameBlock.LogToConsole)
             writeLog(logToFile, logToConsole, noOutputContent,
                 "操作物品展示框", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -1060,7 +1156,9 @@ if (settings.onScoreChange.LogToFile || settings.onScoreChange.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "计分板数值改变", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `计分项${name}被改变为${num}`);
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -1075,7 +1173,9 @@ if (settings.onFireSpread.LogToFile || settings.onFireSpread.LogToConsole) {
                 writeLog(logToFile, logToConsole, noOutputContent,
                     "火焰蔓延", pos.dim, "minecraft:fire", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
@@ -1089,7 +1189,9 @@ if (settings.onConsoleCmd.LogToFile || settings.onConsoleCmd.LogToConsole) {
             writeLog(logToFile, logToConsole, noOutputContent,
                 "执行后台命令", '', '', '', '', '', cmd, '', '', '', '');
         }
-        catch (exception) { ; }
+        catch (exception) {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     });
 }
 
