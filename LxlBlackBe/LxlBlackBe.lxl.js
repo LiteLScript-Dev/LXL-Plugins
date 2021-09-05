@@ -1,4 +1,4 @@
-// 文件名：LxlBlackBe.net.js
+// 文件名：LxlBlackBe.lxl.js
 // 文件功能：LXL平台下BlackBe云黑与本地黑名单工具
 // 作者：yqs112358
 // 首发平台：MineBBS

@@ -3,9 +3,12 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '2.0.3';
+var _VER = '2.1.0';
 var _CONFIG_PATH = './plugins/BehaviorLog/config.json';
 var _SHOW_ERROR_INFO = false;
+
+if(!lxl.checkVersion(0,5,3))
+    throw new Error("\n\n【加载失败】LXL版本过旧！请升级你的LXL版本到0.5.3及以上再使用此插件\n");
 
 var _DEFAULT_CONFIG_FILE = String.raw
 `{
@@ -255,23 +258,39 @@ var _DEFAULT_CONFIG_FILE = String.raw
 var confFile = data.openConfig(_CONFIG_PATH,"json",_DEFAULT_CONFIG_FILE);
 var conf = JSON.parse(confFile.read());
 
-//定时更新文件
-file.mkdir('logs');
+//日志文件
 function GetTodayLogPath() {
     return './logs/BehaviorLog-' + system.getTimeStr().substr(0, 10) + '.csv';
 }
-var lastDay = system.getTimeObj().D;
-var nowLogPath = GetTodayLogPath();
-if (!file.exists(nowLogPath))
-    file.writeLine(nowLogPath, '\ufeff时间,维度,主体,X,Y,Z,事件,目标,x,y,z,附加信息');
 
+var logFile;
+function OpenNewFile()
+{
+    let nowLogPath = GetTodayLogPath();
+
+    var isNewFile = false;
+    if (!file.exists(nowLogPath))
+        isNewFile = true;
+    
+    logFile = file.open(nowLogPath,file.AppendMode);
+    if(!logFile)
+    {
+        throw Error("日志文件打开失败！\n行为日志将无法正常工作！");
+    }
+    
+    if(isNewFile)
+        file.writeLine(nowLogPath, '\ufeff时间,维度,主体,X,Y,Z,事件,目标,x,y,z,附加信息');
+}
+OpenNewFile();
+
+//定时更新文件
+var lastDay = system.getTimeObj().D;
 setInterval(function () {
     if (lastDay != system.getTimeObj().D) {
         //新的一天
         lastDay = system.getTimeObj().D;
-        nowLogPath = GetTodayLogPath();
-        if (!file.exists(nowLogPath))
-            file.writeLine(nowLogPath, '\ufeff时间,维度,主体,X,Y,Z,事件,目标,x,y,z,附加信息');
+        logFile.close();
+        OpenNewFile();
     }
 }, 30000);
 
@@ -282,11 +301,18 @@ setInterval(function () {
     let logStr = "";
     if(fileQueue.length != 0)
     {
-        while (fileQueue.length > 1) {
-            logStr += fileQueue.shift() + "\n";
+        try
+        {
+            while (fileQueue.length > 1) {
+                logStr += fileQueue.shift() + "\n";
+            }
+            logStr += fileQueue.shift();
+            logFile.writeLine(String(logStr));
         }
-        logStr += fileQueue.shift();
-        file.writeLine(nowLogPath, logStr);
+        catch(exception)
+        {
+            if(_SHOW_ERROR_INFO) throw exception;
+        }
     }
 
     //Console Log
@@ -298,19 +324,34 @@ setInterval(function () {
         }
         logStr += consoleQueue.shift();
         if (conf.ShowLogInConsole)
-            log(logStr);
+            fastLog(String(logStr));
     }
 }, 50);
+// setInterval(function(){
+//     try
+//     {
+//         logFile.flush();
+//     }
+//     catch(exception)
+//     {
+//         if(_SHOW_ERROR_INFO) throw exception;
+//     }
+// },3000);
 
 function writeLog(logToFile, logToConsole, NoOutputContent, event, dim, doer, dx, dy, dz, target, tx, ty, tz, notes) {
     let logStr = system.getTimeStr() + ',' + dim + ',' + doer + ',' + dx + ',' + dy + ',' + dz
         + ',' + event + ',' + target + ',' + tx + ',' + ty + ',' + tz + ',' + notes;
 
     if (NoOutputContent.length != 0) {
+        let no = false
         NoOutputContent.forEach(element => {
             if (logStr.indexOf(element) != -1)
-                return;
+            {
+                no = true;
+                return false;
+            }
         });
+        if(no) return;
     }
 
     if (logToFile)
