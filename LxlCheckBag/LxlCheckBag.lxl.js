@@ -3,7 +3,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '1.0.0'
+var _VER = '1.0.1'
 
 file.mkdir("plugins/LxlCheckBag");
 let conf=data.openConfig("plugins/LxlCheckBag/config.json","json","{}");
@@ -47,6 +47,10 @@ function CopyBag(pl1,pl2)
     nbt2.setTag("Inventory",nbt1.getTag("Inventory"));
     nbt2.setTag("Armor",nbt1.getTag("Armor"));
     nbt2.setTag("EnderChestInventory",nbt1.getTag("EnderChestInventory"));
+    pl2.getOffHand().setNull();
+    pl2.getInventory().removeAllItems();
+    pl2.getArmor().removeAllItems();
+    pl2.getEnderChest().removeAllItems();
     pl2.setNbt(nbt2);
 
     pl2.refreshItems();

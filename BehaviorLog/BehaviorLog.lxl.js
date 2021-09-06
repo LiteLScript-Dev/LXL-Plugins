@@ -3,7 +3,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '2.1.0';
+var _VER = '2.1.1';
 var _CONFIG_PATH = './plugins/BehaviorLog/config.json';
 var _SHOW_ERROR_INFO = false;
 
@@ -327,16 +327,16 @@ setInterval(function () {
             fastLog(String(logStr));
     }
 }, 50);
-// setInterval(function(){
-//     try
-//     {
-//         logFile.flush();
-//     }
-//     catch(exception)
-//     {
-//         if(_SHOW_ERROR_INFO) throw exception;
-//     }
-// },3000);
+setInterval(function(){
+    try
+    {
+        logFile.flush();
+    }
+    catch(exception)
+    {
+        if(_SHOW_ERROR_INFO) throw exception;
+    }
+},5000);
 
 function writeLog(logToFile, logToConsole, NoOutputContent, event, dim, doer, dx, dy, dz, target, tx, ty, tz, notes) {
     let logStr = system.getTimeStr() + ',' + dim + ',' + doer + ',' + dx + ',' + dy + ',' + dz
