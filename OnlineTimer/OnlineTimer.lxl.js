@@ -7,9 +7,9 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '1.2.0'
+var _VER = '1.2.2'
 
-
+ProcessOldDataJson();
 var records=data.openConfig('.\\plugins\\OnlineTimer\\data.json' ,"json","{}");
 var conf = data.openConfig('.\\plugins\\OnlineTimer\\config.ini' ,"ini");
 
@@ -123,7 +123,12 @@ function QueryRank(pl)
     let names = Object.keys(dat);
     for(i in names)
     {
-        arr.push( {name:names[i], time:eval(`dat.${names[i]}.TotalTime`)} );
+		try
+		{
+			arr.push( {name:names[i], time:eval(`dat.${names[i]}.TotalTime`)} );
+		}
+		catch(_)
+		{}
     }
 
     arr.sort(function(a,b){
@@ -144,7 +149,6 @@ function QueryRank(pl)
 }
 
 //Main
-
 setInterval(function(){
     let pls = mc.getOnlinePlayers();
     for(let i=0; i<pls.length; ++i)
@@ -175,3 +179,44 @@ mc.regPlayerCmd("onlinetime rank","查询在线时长排名",function(pl,args){
 log('[OnlineTimer] OnlineTimer在线时间统计插件-已装载  当前版本：' + _VER);
 log('[OnlineTimer] 作者：yqs112358   首发平台：MineBBS');
 log('[OnlineTimer] 欲联系作者可前往MineBBS论坛');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//For Compatibility
+function ProcessOldDataJson()
+{
+    try{
+        let f = file.open('.\\plugins\\OnlineTimer\\data.json',file.ReadMode);
+        let c = f.readSync(1);
+        f.close();
+
+        if(c == '[')
+        {
+            log("[OnlineTimer] 检测到旧版数据文件。正在自动更新...");
+            let oldData = JSON.parse(file.readFrom('.\\plugins\\OnlineTimer\\data.json'));
+            let newData = {};
+            for(i in oldData)
+            {
+                newData[oldData[i].name] = {};
+                newData[oldData[i].name].LastLogin = oldData[i].lastLogin;
+                newData[oldData[i].name].TotalTime = oldData[i].totalTime;
+            }
+            file.writeTo('.\\plugins\\OnlineTimer\\data.json',JSON.stringify(newData,null,4));
+            log("[OnlineTimer] 数据文件自动升级完毕");
+        }
+    }
+    catch(_)
+    { }
+}
