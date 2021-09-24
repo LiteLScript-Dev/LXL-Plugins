@@ -3,7 +3,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '1.0.0'
+var _VER = '1.0.1'
 
 mc.regPlayerCmd("editsign","开始修改告示牌",function(pl,args)
 {
@@ -32,6 +32,11 @@ mc.listen("onUseItemOn",function(pl,it,bl){
     {
         if((bl.type == "sign" || bl.type.indexOf("_sign") != -1) && bl.hasBlockEntity())
         {
+            if(pl.getExtraData("_IS_EDIT_SIGN_CLICKING"))
+                return;
+            pl.setExtraData("_IS_EDIT_SIGN_CLICKING",true)
+            setTimeout(function(){ pl.setExtraData("_IS_EDIT_SIGN_CLICKING",null) },200);
+
             let ble = bl.getBlockEntity();
             let nbt = ble.getNbt();
             let text = nbt.getTag("Text").get().replace(/\n/g, "\\n");
