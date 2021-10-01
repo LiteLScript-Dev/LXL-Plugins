@@ -223,7 +223,7 @@
             "LogToConsole": 0,
             "NoOutputContent": []
         },
-        "onScoreChange": {
+        "onScoreChanged": {
             "LogToFile": 0,
             "LogToConsole": 0,
             "NoOutputContent": []

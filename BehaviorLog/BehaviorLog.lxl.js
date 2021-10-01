@@ -3,7 +3,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '2.1.1';
+var _VER = '2.1.3';
 var _CONFIG_PATH = './plugins/BehaviorLog/config.json';
 var _SHOW_ERROR_INFO = false;
 
@@ -236,7 +236,7 @@ var _DEFAULT_CONFIG_FILE = String.raw
             "LogToConsole": 0,
             "NoOutputContent": []
         },
-        "onScoreChange": {
+        "onScoreChanged": {
             "LogToFile": 0,
             "LogToConsole": 0,
             "NoOutputContent": []
@@ -1138,9 +1138,9 @@ if (settings.onPistonPush.LogToFile || settings.onPistonPush.LogToConsole) {
     let logToFile = settings.onPistonPush.LogToFile;
     let logToConsole = settings.onPistonPush.LogToConsole;
     let noOutputContent = settings.onPistonPush.NoOutputContent;
-    mc.listen("onPistonPush", function (pis, bl) {
+    mc.listen("onPistonPush", function (pos, bl) {
         try {
-            let pos = pis.pos;
+            let pis = mc.getBlock(pos);
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
                 "活塞推动", pos.dim, pis.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
@@ -1186,12 +1186,12 @@ if (settings.onUseFrameBlock.LogToFile || settings.onUseFrameBlock.LogToConsole)
     });
 }
 
-//onScoreChange
-if (settings.onScoreChange.LogToFile || settings.onScoreChange.LogToConsole) {
-    let logToFile = settings.onScoreChange.LogToFile;
-    let logToConsole = settings.onScoreChange.LogToConsole;
-    let noOutputContent = settings.onScoreChange.NoOutputContent;
-    mc.listen("onScoreChange", function (pl, num, name, disName) {
+//onScoreChanged
+if (settings.onScoreChanged.LogToFile || settings.onScoreChanged.LogToConsole) {
+    let logToFile = settings.onScoreChanged.LogToFile;
+    let logToConsole = settings.onScoreChanged.LogToConsole;
+    let noOutputContent = settings.onScoreChanged.NoOutputContent;
+    mc.listen("onScoreChanged", function (pl, num, name, disName) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
