@@ -3,7 +3,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '1.8.3'
+var _VER = '1.8.4'
 
 logger.setConsole(true);
 logger.setFile("./logs/BlackBe.log", 3);
@@ -40,7 +40,7 @@ function CheckPlayerLocal(pl) {
     for (var i in blackList) {
         if (blackList[i].name == pl.realName ||
             blackList[i].xuid == pl.xuid ||
-            blackList[i].ip == pl.ip) {
+            (conf.get("banip") && blackList[i].ip == pl.ip)) {
             return (blackList[i].endTime && blackList[i].endTime != "") ? blackList[i].endTime : " ";
         }
     }
