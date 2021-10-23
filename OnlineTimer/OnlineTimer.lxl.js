@@ -7,7 +7,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '1.2.2'
+var _VER = '1.2.3'
 
 ProcessOldDataJson();
 var records=data.openConfig('.\\plugins\\OnlineTimer\\data.json' ,"json","{}");
@@ -125,7 +125,7 @@ function QueryRank(pl)
     {
 		try
 		{
-			arr.push( {name:names[i], time:eval(`dat.${names[i]}.TotalTime`)} );
+			arr.push( {name:names[i], time:dat[names[i]]['TotalTime'] } );
 		}
 		catch(_)
 		{}
@@ -161,8 +161,9 @@ mc.listen("onJoin",function(pl){
     let name = pl.realName;
     if(conf.getBool("Welcome","Enable"))
     {
+        let welcomeStr = GetWelcome(name);
         setTimeout(function(){
-            mc.runcmdEx(`titleraw ${name} actionbar {"rawtext":[{"text":"${GetWelcome(name)}"}]}`);
+            mc.runcmdEx(`titleraw ${name} actionbar {"rawtext":[{"text":"${welcomeStr}"}]}`);
         },1000);
     }
     EnterPlayer(name);
