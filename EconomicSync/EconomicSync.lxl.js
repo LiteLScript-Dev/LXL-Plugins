@@ -8,7 +8,7 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '1.0.0'
+var _VER = '1.0.1'
 lxl.requireVersion(0,5,5);
 
 //Helper
@@ -195,7 +195,7 @@ mc.listen("onServerStarted",function(){
     CheckScoreboard();
 });
 
-mc.regConsoleCmd("economicsync reload",function(args){
+mc.regConsoleCmd("economicsync reload", "reload economic's config", function(args){
     conf.reload();
 });
 

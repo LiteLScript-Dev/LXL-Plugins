@@ -1,6 +1,0 @@
-{
-    "banip": false,
-    "KickByCloudMsg": "正在断开连接",
-    "KickByLocalMsg": "  您已被服务器封禁。\n解封时间：%ENDTIME%",
-    "BlackList": []
-}

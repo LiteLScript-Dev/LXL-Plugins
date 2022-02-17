@@ -1,14 +1,23 @@
 // 文件名：LxlBlackBe.lxl.js
 // 文件功能：LXL平台下BlackBe云黑与本地黑名单工具
-// 作者：yqs112358
+// 作者：yqs112358 & BlackBE运营团队
 // 首发平台：MineBBS
 
-var _VER = '1.8.4'
+var _VER = '1.9.0'
+var _BLACKBE_ADDRESS_PREFIX = "https://api.blackbe.xyz/openapi/v3/check/?"
 
 logger.setConsole(true);
 logger.setFile("./logs/BlackBe.log", 3);
 logger.setTitle("BlackBe")
 var conf = data.openConfig("./plugins/LxlBlackBe/config.json", "json", "{}");
+
+//Default Config File
+conf.init("banip", true);
+conf.init("HidePassMessage", false);
+conf.init("KickByCloudMsg", "正在断开连接");
+conf.init("KickByLocalMsg", "  您已被服务器封禁。\\n\\n解封时间: %ENDTIME%\\n封禁原因: %REASON%");
+conf.init("BlackList", []);
+
 
 function FormatDate(value) {
     var date = new Date(value);
@@ -27,12 +36,14 @@ function FormatDate(value) {
     return t;
 }
 
-function GetLocalKickMsg(pl) {
-    let kickMsg = conf.get("KickByLocalMsg");
+function GetLocalKickMsg(banData) {
+    let kickMsg = conf.get("KickByLocalMsg","正在断开连接");
     if(kickMsg.indexOf("%ENDTIME%") != -1)
-        return kickMsg.replace(/%ENDTIME%/g, CheckPlayerLocal(pl));
-    else
-        return kickMsg;
+        kickMsg = kickMsg.replace(/%ENDTIME%/g, banData.endTime ? banData.endTime : " ");
+    if(kickMsg.indexOf("%REASON%") != -1)
+        kickMsg = kickMsg.replace(/%REASON%/g, banData.reason ? banData.reason : "被管理员封禁");
+    
+    return kickMsg;
 }
 
 function CheckPlayerLocal(pl) {
@@ -41,13 +52,13 @@ function CheckPlayerLocal(pl) {
         if (blackList[i].name == pl.realName ||
             blackList[i].xuid == pl.xuid ||
             (conf.get("banip") && blackList[i].ip == pl.ip)) {
-            return (blackList[i].endTime && blackList[i].endTime != "") ? blackList[i].endTime : " ";
+            return blackList[i];
         }
     }
     return null;
 }
 
-function BanPlayer(name, minutes) {
+function BanPlayer(name, minutes, reason) {
     while (name.startsWith("\""))
         name = name.substr(1);
     while (name.endsWith("\""))
@@ -60,7 +71,7 @@ function BanPlayer(name, minutes) {
         //在线
         banInfo.name = pl.realName;
         banInfo.xuid = pl.xuid;
-        if (conf.get("banip"))
+        if (conf.get("banip",false))
             banInfo.ip = pl.ip;
     }
     else {
@@ -72,6 +83,9 @@ function BanPlayer(name, minutes) {
     }
     if (minutes) {
         banInfo.endTime = FormatDate(new Date().getTime() + minutes * 60000);
+    }
+    if (reason) {
+        banInfo.reason = reason;
     }
 
     //查询是否已存在
@@ -85,6 +99,8 @@ function BanPlayer(name, minutes) {
                 blackList[i].ip = banInfo.ip;
             if (banInfo.endTime)
                 blackList[i].endTime = banInfo.endTime;
+            if (banInfo.reason)
+                blackList[i].reason = banInfo.reason;
 
             conf.set("BlackList", blackList);
             return false;
@@ -109,12 +125,11 @@ function UnbanPlayer(name) {
 }
 
 function ListBan() {
-
     blackList = conf.get("BlackList", []);
     if (blackList.length == 0)
-        log('[BlackBe] 本地黑名单列表为空。');
+        log('本地黑名单列表为空。');
     else {
-        log('[BlackBe] 本地黑名单列表如下：');
+        log('本地黑名单列表如下：');
         blackList.forEach(function (item) {
             log("[Name] ", item.name, "\t[Xuid] ", item.xuid, "\t\t[IP] ", item.ip, "\t\t[EndTime] ", item.endTime);
         });
@@ -136,36 +151,41 @@ setInterval(function () {
 }, 60000);
 
 mc.listen("onPreJoin", function (pl) {
-    logger.info('玩家' + pl.name + '正在进入服务器...');
+    if(!conf.get("HidePassMessage",false))
+        logger.info('玩家' + pl.name + '正在进入服务器...');
 
 
     //检查本地黑名单
-    let localBanTime = CheckPlayerLocal(pl);
-    if (localBanTime != null) {
-        pl.kick(GetLocalKickMsg(pl));
+    let localBanInfo = CheckPlayerLocal(pl);
+    if (localBanInfo != null) {
+        pl.kick(GetLocalKickMsg(localBanInfo));
         logger.warn('发现玩家' + pl.realName + '在服务器本地黑名单上，已断开连接！');
         return;
     }
-    else
+    else if(!conf.get("HidePassMessage",false))
         logger.info('对玩家' + pl.realName + '的本地黑名单检测通过。');
 
 
     //检查云端黑名单
-    network.httpGet('http://api.blackbe.xyz/api/check?v2=true&id=' + pl.name, function (status, result) {
+    network.httpGet(_BLACKBE_ADDRESS_PREFIX + 'name=' + pl.name + '&xuid=' + pl.xuid, function (status, result) {
         if (status != 200)
             logger.error('云黑检查失败！请检查你的网络连接。返回码：' + status);
         else {
             let res = JSON.parse(result);
 
             if (!res.success)
-                logger.error('云黑检查失败！请检查你的网络连接。');
-            else if (res.error != 2003) {
+                logger.error('云黑检查失败！错误码：' + res.status);
+            else if (res.status == 2000) {
                 setTimeout(function () {
-                    pl.kick(conf.get("KickByCloudMsg"));
+                    pl.kick(conf.get("KickByCloudMsg","正在断开连接"));
                 }, 1);
+
                 logger.warn('发现玩家' + pl.realName + '在BlackBe云端黑名单上，已断开连接！');
+                let record = res.data.info[0];
+                logger.warn('玩家违规等级：' + record.level);
+                logger.warn('玩家违规原因：' + record.info);
             }
-            else
+            else if(!conf.get("HidePassMessage",false))
                 logger.info('对玩家' + pl.realName + '的云端黑名单检测通过。');
         }
     });
@@ -178,11 +198,12 @@ mc.regConsoleCmd("ban", "封禁一个玩家", function (args) {
     else {
         let name = args[0];
         let time = args[1];
+        let reason = args[2];
 
-        if (!BanPlayer(name, time))
-            log('[BlackBe] 玩家' + name + '已存在于本地黑名单中');
+        if (!BanPlayer(name, time, reason))
+            log('玩家' + name + '已存在于本地黑名单中');
         else
-            log('[BlackBe] 玩家' + name + '已加入本地黑名单');
+            log('玩家' + name + '已加入本地黑名单');
 
         let pl = mc.getPlayer(name);
         if (pl)
@@ -192,19 +213,20 @@ mc.regConsoleCmd("ban", "封禁一个玩家", function (args) {
 
 mc.regPlayerCmd("ban", "封禁一个玩家", function (pl, args) {
     if (args.length == 0)
-        pl.tell('参数错误！命令用法：ban <玩家名> [封禁时间/分钟]');
+        pl.tell('参数错误！命令用法：ban <玩家名> [封禁时间/分钟] [封禁原因]');
     else {
         let name = args[0];
         let time = args[1];
+        let reason = args[2];
 
-        if (!BanPlayer(name, time))
+        if (!BanPlayer(name, time, reason))
             pl.tell('玩家' + name + '已存在于本地黑名单中');
         else
             pl.tell('玩家' + name + '已加入本地黑名单');
 
-        let pl = mc.getPlayer(name);
-        if (pl)
-            pl.kick(GetLocalKickMsg(pl));
+        let player = mc.getPlayer(name);
+        if (player)
+            player.kick(GetLocalKickMsg(player));
     }
 }, 1);
 
@@ -215,9 +237,9 @@ mc.regConsoleCmd("unban", "解封一个玩家", function (args) {
         let name = args[0];
 
         if (!UnbanPlayer(name))
-            log('[BlackBe] 玩家' + name + '不在本地黑名单中！');
+            log('玩家' + name + '不在本地黑名单中！');
         else {
-            log('[BlackBe] 已从本地黑名单中移除玩家' + name);
+            log('已从本地黑名单中移除玩家' + name);
         }
     }
 });
