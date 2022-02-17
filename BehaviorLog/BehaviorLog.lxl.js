@@ -3,12 +3,15 @@
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = '2.1.3';
+var _VER = [2,1,4];
 var _CONFIG_PATH = './plugins/BehaviorLog/config.json';
 var _SHOW_ERROR_INFO = false;
 
-if(!lxl.checkVersion(0,5,3))
+if(!lxl.requireVersion(0,5,3))
     throw new Error("\n\n【加载失败】LXL版本过旧！请升级你的LXL版本到0.5.3及以上再使用此插件\n");
+
+if(lxl.requireVersion(2,1,3))
+    lxl.registerPlugin("BehaviorLog", "Behavior Log for LiteLoaderBDS", _VER, {"GitHub":"https://github.com/LiteLScript-Dev/LXL-Plugins"});
 
 var _DEFAULT_CONFIG_FILE = String.raw
 `{
@@ -248,7 +251,7 @@ var _DEFAULT_CONFIG_FILE = String.raw
         },
         "onConsoleCmd": {
             "LogToFile": 1,
-            "LogToConsole": 1,
+            "LogToConsole": 0,
             "NoOutputContent": []
         }
     }
@@ -394,7 +397,7 @@ if (settings.onPreJoin.LogToFile || settings.onPreJoin.LogToConsole) {
     mc.listen("onPreJoin", function (pl) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "开始进服", '', pl.name, '', '', '', '', '', '', '', 'xuid=' + pl.xuid);
+                "开始进服", '', pl.realName, '', '', '', '', '', '', '', 'xuid=' + pl.xuid);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -411,7 +414,7 @@ if (settings.onJoin.LogToFile || settings.onJoin.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "进入服务器", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', 'xuid=' + pl.xuid);
+                "进入服务器", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', 'xuid=' + pl.xuid);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -427,7 +430,7 @@ if (settings.onLeft.LogToFile || settings.onLeft.LogToConsole) {
     mc.listen("onLeft", function (pl) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "离开服务器", '', pl.name, '', '', '', '', '', '', '', '');
+                "离开服务器", '', pl.realName, '', '', '', '', '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -444,7 +447,7 @@ if (settings.onRespawn.LogToFile || settings.onRespawn.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "重生", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                "重生", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -461,7 +464,7 @@ if (settings.onPlayerDie.LogToFile || settings.onPlayerDie.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "玩家死亡", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                "玩家死亡", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -478,7 +481,7 @@ if (settings.onPlayerCmd.LogToFile || settings.onPlayerCmd.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "玩家执行命令", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
+                "玩家执行命令", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -495,7 +498,7 @@ if (settings.onChat.LogToFile || settings.onChat.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "聊天", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), msg, '', '', '', '');
+                "聊天", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), msg, '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -520,7 +523,7 @@ if (settings.onChangeDim.LogToFile || settings.onChangeDim.LogToConsole) {
 
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "切换维度", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '前往' + dimName, '', '', '', '');
+                "切换维度", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '前往' + dimName, '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -537,7 +540,7 @@ if (settings.onJump.LogToFile || settings.onJump.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "跳跃", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                "跳跃", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -555,7 +558,7 @@ if (settings.onSneak.LogToFile || settings.onSneak.LogToConsole) {
             let pos = pl.pos;
             if (isSneaking)
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "潜行", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                    "潜行", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -573,7 +576,7 @@ if (settings.onAttack.LogToFile || settings.onAttack.LogToConsole) {
             let pos = pl.pos;
             let acPos = ac.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "攻击", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac.name, acPos.x.toFixed(0), acPos.y.toFixed(0), acPos.z.toFixed(0), `使用物品：${pl.getHand().name} 类型：${pl.getHand().type}`);
+                "攻击", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac.name, acPos.x.toFixed(0), acPos.y.toFixed(0), acPos.z.toFixed(0), `使用物品：${pl.getHand().name} 类型：${pl.getHand().type}`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -590,7 +593,7 @@ if (settings.onUseItem.LogToFile || settings.onUseItem.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `类型：${it.type}`);
+                "使用物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `类型：${it.type}`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -612,7 +615,7 @@ if (settings.onUseItemOn.LogToFile || settings.onUseItemOn.LogToConsole) {
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用物品点击方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `使用物品：${it.name} 类型：${it.type}`);
+                "使用物品点击方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `使用物品：${it.name} 类型：${it.type}`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -630,7 +633,7 @@ if (settings.onTakeItem.LogToFile || settings.onTakeItem.LogToConsole) {
             let enPos = en.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "捡起物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, enPos.x.toFixed(0), enPos.y.toFixed(0), enPos.z.toFixed(0), `${it.count}个`);
+                "捡起物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, enPos.x.toFixed(0), enPos.y.toFixed(0), enPos.z.toFixed(0), `${it.count}个`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -647,7 +650,7 @@ if (settings.onDropItem.LogToFile || settings.onDropItem.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "丢出物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `${it.count}个`);
+                "丢出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `${it.count}个`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -664,7 +667,7 @@ if (settings.onEat.LogToFile || settings.onEat.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "食用食物", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', '');
+                "食用食物", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -682,7 +685,7 @@ if (settings.onStartDestroyBlock.LogToFile || settings.onStartDestroyBlock.LogTo
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "开始破坏方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "开始破坏方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -700,7 +703,7 @@ if (settings.onDestroyBlock.LogToFile || settings.onDestroyBlock.LogToConsole) {
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "破坏方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "破坏方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -727,7 +730,7 @@ if (settings.onPlaceBlock.LogToFile || settings.onPlaceBlock.LogToConsole) {
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "放置方块", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "放置方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -745,7 +748,7 @@ if (settings.onOpenContainer.LogToFile || settings.onOpenContainer.LogToConsole)
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "打开容器", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "打开容器", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -763,7 +766,7 @@ if (settings.onCloseContainer.LogToFile || settings.onCloseContainer.LogToConsol
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "关闭容器", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "关闭容器", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -785,10 +788,10 @@ if (settings.onInventoryChange.LogToFile || settings.onInventoryChange.LogToCons
             let pos = pl.pos;
             if (newItem.isNull())
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "物品栏 取出物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), oldItem.name, '', '', '', `${oldItem.count}个 在第${slotNum}号槽`);
+                    "物品栏 取出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), oldItem.name, '', '', '', `${oldItem.count}个 在第${slotNum}号槽`);
             else
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "物品栏 放入物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
+                    "物品栏 放入物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -809,10 +812,10 @@ if (settings.onSetArmor.LogToFile || settings.onSetArmor.LogToConsole) {
             let pos = pl.pos;
             if (newItem.isNull())
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "盔甲栏 取出物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `在第${slotNum}号槽`);
+                    "盔甲栏 取出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `在第${slotNum}号槽`);
             else
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "盔甲栏 放入物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
+                    "盔甲栏 放入物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -829,7 +832,7 @@ if (settings.onUseRespawnAnchor.LogToFile || settings.onUseRespawnAnchor.LogToCo
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用重生锚", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:respawn_anchor', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "使用重生锚", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:respawn_anchor', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -846,7 +849,7 @@ if (settings.onOpenContainerScreen.LogToFile || settings.onOpenContainerScreen.L
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "打开容器UI", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                "打开容器UI", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -987,7 +990,7 @@ if (settings.onBlockInteracted.LogToFile || settings.onBlockInteracted.LogToCons
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "方块接受玩家互动", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "方块接受玩家互动", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -1019,7 +1022,7 @@ if (settings.onRespawnAnchorExplode.LogToFile || settings.onRespawnAnchorExplode
     mc.listen("onRespawnAnchorExplode", function (pos, pl) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "重生锚爆炸", pos.dim, "minecraft:respawn_anchor", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由${pl.name}引起`);
+                "重生锚爆炸", pos.dim, "minecraft:respawn_anchor", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由${pl.realName}引起`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -1072,10 +1075,10 @@ if (settings.onContainerChange.LogToFile || settings.onContainerChange.LogToCons
             let blPos = bl.pos;
             if (newItem.isNull())
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "从容器取出物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `从第${slotNum}号槽 取出${oldItem.count}个 ${oldItem.name}`);
+                    "从容器取出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `从第${slotNum}号槽 取出${oldItem.count}个 ${oldItem.name}`);
             else
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "向容器放入物品", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `向第${slotNum}号槽 放入${newItem.count}个 ${newItem.name}`);
+                    "向容器放入物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `向第${slotNum}号槽 放入${newItem.count}个 ${newItem.name}`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -1178,7 +1181,7 @@ if (settings.onUseFrameBlock.LogToFile || settings.onUseFrameBlock.LogToConsole)
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "操作物品展示框", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                "操作物品展示框", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -1195,7 +1198,7 @@ if (settings.onScoreChanged.LogToFile || settings.onScoreChanged.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "计分板数值改变", pos.dim, pl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `计分项${name}被改变为${num}`);
+                "计分板数值改变", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `计分项${name}被改变为${num}`);
         }
         catch (exception) {
             if(_SHOW_ERROR_INFO) throw exception;
@@ -1271,7 +1274,7 @@ mc.regConsoleCmd("behaviorlog","Contorl BehaviorLog",function(args){
         log("此操作不存在！");
 });
 
-log('[BehaviorLog] BehaviorLog行为监控日志-已装载  当前版本：' + _VER);
-log('[BehaviorLog] 【配置文件】位于 ' + _CONFIG_PATH);
-log('[BehaviorLog] 作者：yqs112358  发布平台：MineBBS');
-log('[BehaviorLog] 欲联系作者可前往MineBBS论坛');
+log('BehaviorLog行为监控日志-已装载  当前版本：' + _VER[0] + "." + _VER[1] + "." + _VER[2]);
+log('【配置文件】位于 ' + _CONFIG_PATH);
+log('作者：yqs112358  发布平台：MineBBS');
+log('联系作者可前往MineBBS论坛');
