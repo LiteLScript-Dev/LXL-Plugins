@@ -10,8 +10,8 @@
 var _VER = '1.2.3'
 
 ProcessOldDataJson();
-var records=data.openConfig('.\\plugins\\OnlineTimer\\data.json' ,"json","{}");
-var conf = data.openConfig('.\\plugins\\OnlineTimer\\config.ini' ,"ini");
+var records=data.openConfig('.\\plugins\\LlsePluginsData\\OnlineTimer\\data.json' ,"json","{}");
+var conf = data.openConfig('.\\plugins\\LlsePluginsData\\OnlineTimer\\config.ini' ,"ini");
 
 //Utils
 function GetTimeGap(timestr)
@@ -199,14 +199,14 @@ log('[OnlineTimer] 欲联系作者可前往MineBBS论坛');
 function ProcessOldDataJson()
 {
     try{
-        let f = file.open('.\\plugins\\OnlineTimer\\data.json',file.ReadMode);
+        let f = file.open('.\\plugins\\LlsePluginsData\\OnlineTimer\\data.json',file.ReadMode);
         let c = f.readSync(1);
         f.close();
 
         if(c == '[')
         {
             log("[OnlineTimer] 检测到旧版数据文件。正在自动更新...");
-            let oldData = JSON.parse(file.readFrom('.\\plugins\\OnlineTimer\\data.json'));
+            let oldData = JSON.parse(file.readFrom('.\\plugins\\LlsePluginsData\\OnlineTimer\\data.json'));
             let newData = {};
             for(i in oldData)
             {
@@ -214,7 +214,7 @@ function ProcessOldDataJson()
                 newData[oldData[i].name].LastLogin = oldData[i].lastLogin;
                 newData[oldData[i].name].TotalTime = oldData[i].totalTime;
             }
-            file.writeTo('.\\plugins\\OnlineTimer\\data.json',JSON.stringify(newData,null,4));
+            file.writeTo('.\\plugins\\LlsePluginsData\\OnlineTimer\\data.json',JSON.stringify(newData,null,4));
             log("[OnlineTimer] 数据文件自动升级完毕");
         }
     }

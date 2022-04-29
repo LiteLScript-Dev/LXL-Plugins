@@ -18,7 +18,7 @@ String.prototype.replaceAll=function(f,t)
     return this.replace(reg,t); 
 }
 
-var conf = new IniConfigFile("./plugins/EconomicSync/config.ini", "");
+var conf = new IniConfigFile("./plugins/LlsePluginsData/EconomicSync/config.ini", "");
 logger.setTitle("EconomicSync");
 
 function CheckScoreboard()
@@ -97,7 +97,7 @@ function LLMoneyChange(xuid,newValue)
     }
     else
     {
-        let changed = File.readFrom("plugins/EconomicSync/changed.json");
+        let changed = File.readFrom("plugins/LlsePluginsData/EconomicSync/changed.json");
         if(changed == null || changed == "")
             changed = "[]";
 
@@ -107,7 +107,7 @@ function LLMoneyChange(xuid,newValue)
         {
             //离线修改
             arr.push(xuid);
-            File.writeTo("plugins/EconomicSync/changed.json",JSON.stringify(arr));
+            File.writeTo("plugins/LlsePluginsData/EconomicSync/changed.json",JSON.stringify(arr));
         }
     }
 }
@@ -167,7 +167,7 @@ mc.listen("onMoneySet",function(xuid_para,num_para)
 });
 
 mc.listen("onJoin",function(pl){
-    let changed = File.readFrom("plugins/EconomicSync/changed.json");
+    let changed = File.readFrom("plugins/LlsePluginsData/EconomicSync/changed.json");
 
     let synced = false;
     if(changed != null && changed != "")
@@ -182,7 +182,7 @@ mc.listen("onJoin",function(pl){
             ChangeMessage(pl,num);
 
             arr.splice(index,1);
-            File.writeTo("plugins/EconomicSync/changed.json",JSON.stringify(arr));
+            File.writeTo("plugins/LlsePluginsData/EconomicSync/changed.json",JSON.stringify(arr));
             synced = true;
         }
     }
