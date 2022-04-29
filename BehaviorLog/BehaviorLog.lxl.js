@@ -1,21 +1,23 @@
+//UpgradeEX* {"name":"LlsePlugins","platform":"github","repo":"LiteLScript-Dev\/LXL-Plugins","currentRelease":"v1.0.0"} */
 // 文件名：BehaviorLog.lxl.js
 // 文件功能：LXL平台下BehaviorLog行为监控日志
 // 作者：yqs112358
 // 首发平台：MineBBS
 
-var _VER = [2,1,4];
+var _VER = [2, 1, 4];
 var _CONFIG_PATH = './plugins/BehaviorLog/config.json';
 var _SHOW_ERROR_INFO = false;
 
-if(!lxl.requireVersion(0,5,3))
+if (!lxl.requireVersion(0, 5, 3))
     throw new Error("\n\n【加载失败】LXL版本过旧！请升级你的LXL版本到0.5.3及以上再使用此插件\n");
 
-if(lxl.requireVersion(2,1,3))
-    lxl.registerPlugin("BehaviorLog", "Behavior Log for LiteLoaderBDS", _VER, {"GitHub":"https://github.com/LiteLScript-Dev/LXL-Plugins"});
+if (lxl.requireVersion(2, 1, 3))
+    lxl.registerPlugin("BehaviorLog", "Behavior Log for LiteLoaderBDS", _VER, { "GitHub": "https://github.com/LiteLScript-Dev/LXL-Plugins" });
 
 var _DEFAULT_CONFIG_FILE = String.raw
-`{
+    `{
     "ShowLogInConsole": 1,
+    "Language":"zh-cn",
     "Settings": {
         "onPreJoin": {
             "LogToFile": 1,
@@ -258,8 +260,35 @@ var _DEFAULT_CONFIG_FILE = String.raw
 }`;
 
 //配置文件
-var confFile = data.openConfig(_CONFIG_PATH,"json",_DEFAULT_CONFIG_FILE);
-var conf = JSON.parse(confFile.read());
+var confFile = data.openConfig(_CONFIG_PATH, "json", _DEFAULT_CONFIG_FILE);
+const conf = JSON.parse(confFile.read());
+const i18n = {
+    data: {},
+    /**
+    * 翻译主代码
+    * @param {string} sentence 翻译字段
+    * @param {Array[string]} replacer 替换字符
+    * @returns {string}
+    */
+    $t(sentence, replacer = []) {
+        if (!this.data[sentence]) {
+            return `Translate Error:${sentence}`;
+        }
+        let output = this.data[sentence];
+        for (let index = 0; index < replacer.length; index++) {
+            const element = replacer[index];
+            output = output.replace("%s" + index, element);
+        }
+        return output;
+    },
+    reload() {
+        if (file.exists("./plugins/LlsePluginsData/BehaviorLog/i18n/" + conf["Language"] + ".json")) {
+            this.data = data.parseJson(File.readFrom("./plugins/LlsePluginsData/BehaviorLog/i18n/" + conf["Language"] + ".json"));
+        }
+    }
+};
+
+i18n.reload();
 
 //日志文件
 function GetTodayLogPath() {
@@ -267,22 +296,20 @@ function GetTodayLogPath() {
 }
 
 var logFile;
-function OpenNewFile()
-{
+function OpenNewFile() {
     let nowLogPath = GetTodayLogPath();
 
     var isNewFile = false;
     if (!file.exists(nowLogPath))
         isNewFile = true;
-    
-    logFile = file.open(nowLogPath,file.AppendMode);
-    if(!logFile)
-    {
-        throw Error("日志文件打开失败！\n行为日志将无法正常工作！");
+
+    logFile = file.open(nowLogPath, file.AppendMode);
+    if (!logFile) {
+        throw Error(i18n.$t("notify.openError"));
     }
-    
-    if(isNewFile)
-        file.writeLine(nowLogPath, '\ufeff时间,维度,主体,X,Y,Z,事件,目标,x,y,z,附加信息');
+
+    if (isNewFile)
+        file.writeLine(nowLogPath, `\ufeff${i18n.$t("common.time")},${i18n.$t("common.dim")},${i18n.$t("common.source")},X,Y,Z,${i18n.$t("common.event")},${i18n.$t("common.target")},x,y,z,${i18n.$t("common.extra")}`);
 }
 OpenNewFile();
 
@@ -302,26 +329,22 @@ var consoleQueue = [], fileQueue = [];
 setInterval(function () {
     //File Log
     let logStr = "";
-    if(fileQueue.length != 0)
-    {
-        try
-        {
+    if (fileQueue.length != 0) {
+        try {
             while (fileQueue.length > 1) {
                 logStr += fileQueue.shift() + "\n";
             }
             logStr += fileQueue.shift();
             logFile.writeLine(String(logStr));
         }
-        catch(exception)
-        {
-            if(_SHOW_ERROR_INFO) throw exception;
+        catch (exception) {
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     }
 
     //Console Log
     logStr = "";
-    if(consoleQueue.length != 0)
-    {
+    if (consoleQueue.length != 0) {
         while (consoleQueue.length > 1) {
             logStr += consoleQueue.shift() + "\n";
         }
@@ -330,16 +353,14 @@ setInterval(function () {
             fastLog(String(logStr));
     }
 }, 50);
-setInterval(function(){
-    try
-    {
+setInterval(function () {
+    try {
         logFile.flush();
     }
-    catch(exception)
-    {
-        if(_SHOW_ERROR_INFO) throw exception;
+    catch (exception) {
+        if (_SHOW_ERROR_INFO) throw exception;
     }
-},5000);
+}, 5000);
 
 function writeLog(logToFile, logToConsole, NoOutputContent, event, dim, doer, dx, dy, dz, target, tx, ty, tz, notes) {
     let logStr = system.getTimeStr() + ',' + dim + ',' + doer + ',' + dx + ',' + dy + ',' + dz
@@ -348,30 +369,28 @@ function writeLog(logToFile, logToConsole, NoOutputContent, event, dim, doer, dx
     if (NoOutputContent.length != 0) {
         let no = false
         NoOutputContent.forEach(element => {
-            if (logStr.indexOf(element) != -1)
-            {
+            if (logStr.indexOf(element) != -1) {
                 no = true;
                 return false;
             }
         });
-        if(no) return;
+        if (no) return;
     }
 
     if (logToFile)
         fileQueue.push(logStr);
-    if (conf.ShowLogInConsole && logToConsole)
-    {
+    if (conf.ShowLogInConsole && logToConsole) {
         logStr = '[' + system.getTimeStr() + '][' + event + '] ';
-        if(dim != '')
-            logStr += '在' + dim + '  ';
-        if(doer != '')
+        if (dim != '')
+            logStr += i18n.$t("common.at") + dim + '  ';
+        if (doer != '')
             logStr += doer;
-        if(dx != '')
+        if (dx != '')
             logStr += ' (' + dx + ',' + dy + ',' + dz + ')';
         logStr += '  ' + event + '  ';
-        if(target != '')
+        if (target != '')
             logStr += target;
-        if(tx != '')
+        if (tx != '')
             logStr += ' (' + tx + ',' + ty + ',' + tz + ')';
         logStr += '  ' + notes;
 
@@ -380,11 +399,10 @@ function writeLog(logToFile, logToConsole, NoOutputContent, event, dim, doer, dx
 }
 
 //导出接口
-function writeLogExported(event,dim,doer,dx,dy,dz,target,tx,ty,tz,notes,logToConsole,logToFile)
-{
-    writeLog(logToFile,logToConsole,[],event,dim,doer,dx,dy,dz,target,tx,ty,tz,notes);
+function writeLogExported(event, dim, doer, dx, dy, dz, target, tx, ty, tz, notes, logToConsole, logToFile) {
+    writeLog(logToFile, logToConsole, [], event, dim, doer, dx, dy, dz, target, tx, ty, tz, notes);
 }
-lxl.export(writeLogExported,"BehaviorLog_WriteLog");
+lxl.export(writeLogExported, "BehaviorLog_WriteLog");
 
 //监控部分
 var settings = conf.Settings;
@@ -397,10 +415,10 @@ if (settings.onPreJoin.LogToFile || settings.onPreJoin.LogToConsole) {
     mc.listen("onPreJoin", function (pl) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "开始进服", '', pl.realName, '', '', '', '', '', '', '', 'xuid=' + pl.xuid);
+                i18n.$t("event.onPreJoin"), '', pl.realName, '', '', '', '', '', '', '', 'xuid=' + pl.xuid);
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -414,10 +432,10 @@ if (settings.onJoin.LogToFile || settings.onJoin.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "进入服务器", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', 'xuid=' + pl.xuid);
+                i18n.$t("event.onJoin"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', 'xuid=' + pl.xuid);
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -430,10 +448,10 @@ if (settings.onLeft.LogToFile || settings.onLeft.LogToConsole) {
     mc.listen("onLeft", function (pl) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "离开服务器", '', pl.realName, '', '', '', '', '', '', '', '');
+                i18n.$t("event.onLeft"), '', pl.realName, '', '', '', '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -447,10 +465,10 @@ if (settings.onRespawn.LogToFile || settings.onRespawn.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "重生", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onRespawn"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -464,10 +482,10 @@ if (settings.onPlayerDie.LogToFile || settings.onPlayerDie.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "玩家死亡", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onPlayerDie"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -481,10 +499,10 @@ if (settings.onPlayerCmd.LogToFile || settings.onPlayerCmd.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "玩家执行命令", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
+                i18n.$t("event.onPlayerCmd"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -498,10 +516,10 @@ if (settings.onChat.LogToFile || settings.onChat.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "聊天", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), msg, '', '', '', '');
+                i18n.$t("event.onChat"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), msg, '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -515,18 +533,18 @@ if (settings.onChangeDim.LogToFile || settings.onChangeDim.LogToConsole) {
         try {
             let dimName = "Unknown";
             if (to == 0)
-                dimName = "主世界";
+                dimName = i18n.$t("dim.0");
             else if (to == 1)
-                dimName = "下界";
+                dimName = i18n.$t("dim.1");
             else if (to == 2)
-                dimName = "末地";
+                dimName = i18n.$t("dim.2");
 
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "切换维度", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '前往' + dimName, '', '', '', '');
+                i18n.$t("event.onChangeDim"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), i18n.$t("common.to") + dimName, '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -540,10 +558,10 @@ if (settings.onJump.LogToFile || settings.onJump.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "跳跃", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onJump"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -558,10 +576,10 @@ if (settings.onSneak.LogToFile || settings.onSneak.LogToConsole) {
             let pos = pl.pos;
             if (isSneaking)
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "潜行", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                    i18n.$t("event.onSneak"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -576,10 +594,10 @@ if (settings.onAttack.LogToFile || settings.onAttack.LogToConsole) {
             let pos = pl.pos;
             let acPos = ac.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "攻击", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac.name, acPos.x.toFixed(0), acPos.y.toFixed(0), acPos.z.toFixed(0), `使用物品：${pl.getHand().name} 类型：${pl.getHand().type}`);
+                i18n.$t("event.onAttack"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac.name, acPos.x.toFixed(0), acPos.y.toFixed(0), acPos.z.toFixed(0),i18n.$t("detial.attack",[pl.getHand().name,pl.getHand().type]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -593,10 +611,10 @@ if (settings.onUseItem.LogToFile || settings.onUseItem.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `类型：${it.type}`);
+                i18n.$t("event.onUseItem"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', i18n.$t("detial.useItem",[it.type]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -609,16 +627,16 @@ if (settings.onUseItemOn.LogToFile || settings.onUseItemOn.LogToConsole) {
     mc.listen("onUseItemOn", function (pl, it, bl) {
         try {
             //防抖
-            if(pl.getExtraData("_BEHAVIOR_LOG_PLACE_BLOCK"))
+            if (pl.getExtraData("_BEHAVIOR_LOG_PLACE_BLOCK"))
                 return;
 
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用物品点击方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `使用物品：${it.name} 类型：${it.type}`);
+                i18n.$t("event.onUseItemOn"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), i18n.$t("detial.onUseItemOn",[it.name,it.type]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -633,10 +651,10 @@ if (settings.onTakeItem.LogToFile || settings.onTakeItem.LogToConsole) {
             let enPos = en.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "捡起物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, enPos.x.toFixed(0), enPos.y.toFixed(0), enPos.z.toFixed(0), `${it.count}个`);
+                i18n.$t("event.onTakeItem"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, enPos.x.toFixed(0), enPos.y.toFixed(0), enPos.z.toFixed(0), `${it.count}个`);
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -650,10 +668,10 @@ if (settings.onDropItem.LogToFile || settings.onDropItem.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "丢出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `${it.count}个`);
+                i18n.$t("event.onDropItem"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', `${it.count}`);
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -667,10 +685,10 @@ if (settings.onEat.LogToFile || settings.onEat.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "食用食物", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', '');
+                i18n.$t("event.onEat"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), it.name, '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -685,10 +703,10 @@ if (settings.onStartDestroyBlock.LogToFile || settings.onStartDestroyBlock.LogTo
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "开始破坏方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onStartDestroyBlock"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -703,10 +721,10 @@ if (settings.onDestroyBlock.LogToFile || settings.onDestroyBlock.LogToConsole) {
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "破坏方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onDestroyBlock"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -719,21 +737,20 @@ if (settings.onPlaceBlock.LogToFile || settings.onPlaceBlock.LogToConsole) {
     mc.listen("onPlaceBlock", function (pl, bl) {
         try {
             //防抖
-            if(pl.getExtraData("_BEHAVIOR_LOG_PLACE_BLOCK"))
+            if (pl.getExtraData("_BEHAVIOR_LOG_PLACE_BLOCK"))
                 return;
-            else
-            {
-                pl.setExtraData("_BEHAVIOR_LOG_PLACE_BLOCK",true);
-                setTimeout(function(){pl.setExtraData("_BEHAVIOR_LOG_PLACE_BLOCK",null);},100);
+            else {
+                pl.setExtraData("_BEHAVIOR_LOG_PLACE_BLOCK", true);
+                setTimeout(function () { pl.setExtraData("_BEHAVIOR_LOG_PLACE_BLOCK", null); }, 100);
             }
 
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "放置方块", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onPlaceBlock"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -748,10 +765,10 @@ if (settings.onOpenContainer.LogToFile || settings.onOpenContainer.LogToConsole)
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "打开容器", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onOpenContainer"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -766,10 +783,10 @@ if (settings.onCloseContainer.LogToFile || settings.onCloseContainer.LogToConsol
             let blPos = bl.pos;
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "关闭容器", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onCloseContainer"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -788,13 +805,13 @@ if (settings.onInventoryChange.LogToFile || settings.onInventoryChange.LogToCons
             let pos = pl.pos;
             if (newItem.isNull())
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "物品栏 取出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), oldItem.name, '', '', '', `${oldItem.count}个 在第${slotNum}号槽`);
+                    i18n.$t("event.onInventoryOut"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), oldItem.name, '', '', '', i18n.$t("detial.onInventory",[oldItem.count,slotNum]));
             else
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "物品栏 放入物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
+                    i18n.$t("event.onInventoryIn"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', i18n.$t("detial.onInventory",[newItem.count,slotNum]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -812,13 +829,13 @@ if (settings.onSetArmor.LogToFile || settings.onSetArmor.LogToConsole) {
             let pos = pl.pos;
             if (newItem.isNull())
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "盔甲栏 取出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `在第${slotNum}号槽`);
+                    i18n.$t("event.onSetArmorOut"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.slot",[slotNum]));
             else
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "盔甲栏 放入物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', `${newItem.count}个 在第${slotNum}号槽`);
+                    i18n.$t("event.onSetArmorIn"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), newItem.name, '', '', '', i18n.$t("detial.onInventory",[newItem.count,slotNum]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -832,10 +849,10 @@ if (settings.onUseRespawnAnchor.LogToFile || settings.onUseRespawnAnchor.LogToCo
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "使用重生锚", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:respawn_anchor', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onUseRespawnAnchor"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:respawn_anchor', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -849,10 +866,10 @@ if (settings.onOpenContainerScreen.LogToFile || settings.onOpenContainerScreen.L
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "打开容器UI", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onOpenContainerScreen"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -864,15 +881,14 @@ if (settings.onMobDie.LogToFile || settings.onMobDie.LogToConsole) {
     let noOutputContent = settings.onMobDie.NoOutputContent;
     mc.listen("onMobDie", function (mob, source) {
         try {
-            if(mob.type != "minecraft:player")
-            {
+            if (mob.type != "minecraft:player") {
                 let pos = mob.pos;
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "生物死亡", pos.dim, mob.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由于${source.name}的攻击`);
+                    i18n.$t("event.onMobDie"), pos.dim, mob.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.attickFrom",[source.name]));
             }
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -886,10 +902,10 @@ if (settings.onMobHurt.LogToFile || settings.onMobHurt.LogToConsole) {
         try {
             let pos = mob.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "生物受伤", pos.dim, mob.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `受到来自${source.name}的${damage}点伤害`);
+                i18n.$t("event.onMobHurt"), pos.dim, mob.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.hurt",[source.name,damage]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -902,10 +918,10 @@ if (settings.onExplode.LogToFile || settings.onExplode.LogToConsole) {
     mc.listen("onExplode", function (source, pos) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "爆炸", pos.dim, source.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onExplode"), pos.dim, source.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -919,10 +935,10 @@ if (settings.onProjectileHitEntity.LogToFile || settings.onProjectileHitEntity.L
         try {
             let pos = entity.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "弹射物击中", pos.dim, source.name, '', '', '', entity.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '');
+                i18n.$t("event.onProjectileHitEntity"), pos.dim, source.name, '', '', '', entity.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -936,10 +952,10 @@ if (settings.onWitherBossDestroy.LogToFile || settings.onWitherBossDestroy.LogTo
         try {
             let pos = witherBoss.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "凋零破坏", pos.dim, witherBoss.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `破坏从${Pos2String(AAbb)}到${Pos2String(aaBB)}的方块`);
+                i18n.$t("event.onWitherBossDestroy"), pos.dim, witherBoss.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.witherDestpry",[Pos2String(AAbb),Pos2String(aaBB)]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -954,10 +970,10 @@ if (settings.onRide.LogToFile || settings.onRide.LogToConsole) {
             let pos = ac1.pos;
             let pos2 = ac2.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "生物骑乘", pos.dim, ac1.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac2.name, pos2.x.toFixed(0), pos2.y.toFixed(0), pos2.z.toFixed(0), '');
+                i18n.$t("event.onRide"), pos.dim, ac1.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), ac2.name, pos2.x.toFixed(0), pos2.y.toFixed(0), pos2.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -972,10 +988,10 @@ if (settings.onStepOnPressurePlate.LogToFile || settings.onStepOnPressurePlate.L
             let pos = ac.pos;
             let blPos = plate.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "踩踏压力板", pos.dim, ac.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), plate.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onStepOnPressurePlate"), pos.dim, ac.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), plate.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -990,10 +1006,10 @@ if (settings.onBlockInteracted.LogToFile || settings.onBlockInteracted.LogToCons
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "方块接受玩家互动", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onBlockInteracted"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1006,10 +1022,10 @@ if (settings.onBedExplode.LogToFile || settings.onBedExplode.LogToConsole) {
     mc.listen("onBedExplode", function (pos) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "床爆炸", pos.dim, "minecraft:bed", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onBedExplode"), pos.dim, "minecraft:bed", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1022,10 +1038,10 @@ if (settings.onRespawnAnchorExplode.LogToFile || settings.onRespawnAnchorExplode
     mc.listen("onRespawnAnchorExplode", function (pos, pl) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "重生锚爆炸", pos.dim, "minecraft:respawn_anchor", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由${pl.realName}引起`);
+                i18n.$t("event.onRespawnAnchorExplode"), pos.dim, "minecraft:respawn_anchor", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.causeBy",[pl.realName]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1039,10 +1055,10 @@ if (settings.onBlockExploded.LogToFile || settings.onBlockExploded.LogToConsole)
         try {
             let pos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "方块被爆炸破坏", pos.dim, bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `由${source.name}引起的爆炸`);
+                i18n.$t("event.onBlockExploded"), pos.dim, bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.causeBy",[source.name]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1055,10 +1071,10 @@ if (settings.onCmdBlockExecute.LogToFile || settings.onCmdBlockExecute.LogToCons
     mc.listen("onCmdBlockExecute", function (cmd, pos) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "命令方块执行", pos.dim, "minecraft:command_block", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
+                i18n.$t("event.onCmdBlockExecute"), pos.dim, "minecraft:command_block", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), cmd, '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1075,13 +1091,13 @@ if (settings.onContainerChange.LogToFile || settings.onContainerChange.LogToCons
             let blPos = bl.pos;
             if (newItem.isNull())
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "从容器取出物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `从第${slotNum}号槽 取出${oldItem.count}个 ${oldItem.name}`);
+                    i18n.$t("event.onContainerOut"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), i18n.$t("detial.ContainOut",[slotNum,oldItem.count,oldItem.name]));
             else
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "向容器放入物品", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), `向第${slotNum}号槽 放入${newItem.count}个 ${newItem.name}`);
+                    i18n.$t("event.onContainerIn"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), i18n.$t("detial.ContainIn",[slotNum,newItem.count,newItem.name]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1095,10 +1111,10 @@ if (settings.onProjectileHitBlock.LogToFile || settings.onProjectileHitBlock.Log
         try {
             let pos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "弹射物击中", pos.dim, source.name, '', '', '', bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '');
+                i18n.$t("event.onProjectileHitBlock"), pos.dim, source.name, '', '', '', bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1112,10 +1128,10 @@ if (settings.onRedStoneUpdate.LogToFile || settings.onRedStoneUpdate.LogToConsol
         try {
             let pos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "红石更新", pos.dim, bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', isActive ? '激活 红石等级' + level : '熄灭');
+                i18n.$t("event.onRedStoneUpdate"), pos.dim, bl.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', isActive ? i18n.$t("detial.on",[level]): i18n.$t("detial.off"));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1128,10 +1144,10 @@ if (settings.onHopperPushOut.LogToFile || settings.onHopperPushOut.LogToConsole)
     mc.listen("onHopperPushOut", function (pos) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "漏斗（矿车）输出物品", pos.dim, "Hopper", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                i18n.$t("event.onHopperPushOut"), pos.dim, "Hopper", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1146,10 +1162,10 @@ if (settings.onPistonPush.LogToFile || settings.onPistonPush.LogToConsole) {
             let pis = mc.getBlock(pos);
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "活塞推动", pos.dim, pis.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onPistonPush"), pos.dim, pis.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1163,10 +1179,10 @@ if (settings.onFarmLandDecay.LogToFile || settings.onFarmLandDecay.LogToConsole)
         try {
             let pos = ac.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "破坏耕地", pos.dim, ac.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:farm_land', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onFarmLandDecay"), pos.dim, ac.name, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), 'minecraft:farm_land', blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1181,10 +1197,10 @@ if (settings.onUseFrameBlock.LogToFile || settings.onUseFrameBlock.LogToConsole)
             let pos = pl.pos;
             let blPos = bl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "操作物品展示框", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
+                i18n.$t("event.onUseFrameBlock"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), bl.name, blPos.x.toFixed(0), blPos.y.toFixed(0), blPos.z.toFixed(0), '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1198,10 +1214,10 @@ if (settings.onScoreChanged.LogToFile || settings.onScoreChanged.LogToConsole) {
         try {
             let pos = pl.pos;
             writeLog(logToFile, logToConsole, noOutputContent,
-                "计分板数值改变", pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', `计分项${name}被改变为${num}`);
+                i18n.$t("event.onScoreChanged"), pos.dim, pl.realName, pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', i18n.$t("detial.scoreboardChange",[name,num]));
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1213,12 +1229,12 @@ if (settings.onFireSpread.LogToFile || settings.onFireSpread.LogToConsole) {
     let noOutputContent = settings.onFireSpread.NoOutputContent;
     mc.listen("onFireSpread", function (pos) {
         try {
-            if(pos.dimid != 1)
+            if (pos.dimid != 1)
                 writeLog(logToFile, logToConsole, noOutputContent,
-                    "火焰蔓延", pos.dim, "minecraft:fire", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
+                    i18n.$t("event.onFireSpread"), pos.dim, "minecraft:fire", pos.x.toFixed(0), pos.y.toFixed(0), pos.z.toFixed(0), '', '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1231,10 +1247,10 @@ if (settings.onConsoleCmd.LogToFile || settings.onConsoleCmd.LogToConsole) {
     mc.listen("onConsoleCmd", function (cmd) {
         try {
             writeLog(logToFile, logToConsole, noOutputContent,
-                "执行后台命令", '', '', '', '', '', cmd, '', '', '', '');
+                i18n.$t("event.onConsoleCmd"), '', '', '', '', '', cmd, '', '', '', '');
         }
         catch (exception) {
-            if(_SHOW_ERROR_INFO) throw exception;
+            if (_SHOW_ERROR_INFO) throw exception;
         }
     });
 }
@@ -1257,24 +1273,22 @@ function Pos2String(pos) {
 delete settings;
 
 //注册临时关闭
-mc.regConsoleCmd("behaviorlog","Contorl BehaviorLog",function(args){
-    if(args[0] == 'hide')
-    {
-        if(conf.ShowLogInConsole)
+mc.regConsoleCmd("behaviorlog", "Contorl BehaviorLog", function (args) {
+    if (args[0] == 'hide') {
+        if (conf.ShowLogInConsole)
             conf.ShowLogInConsole = false;
-        log("控制台行为日志输出已关闭");
+        log(i18n.$t("console.off"));
     }
-    else if(args[0] == 'show')
-    {
-        if(!conf.ShowLogInConsole)
+    else if (args[0] == 'show') {
+        if (!conf.ShowLogInConsole)
             conf.ShowLogInConsole = true;
-        log("控制台行为日志输出已开启");
+        log(i18n.$t("console.on"));
     }
     else
-        log("此操作不存在！");
+        log(i18n.$t("console.error"));
 });
 
-log('BehaviorLog行为监控日志-已装载  当前版本：' + _VER[0] + "." + _VER[1] + "." + _VER[2]);
-log('【配置文件】位于 ' + _CONFIG_PATH);
+log(i18n.$t("info.log") + _VER[0] + "." + _VER[1] + "." + _VER[2]);
+log(i18n.$t("info.configD") + _CONFIG_PATH);
 log('作者：yqs112358  发布平台：MineBBS');
 log('联系作者可前往MineBBS论坛');
