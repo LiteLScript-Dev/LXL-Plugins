@@ -18,7 +18,7 @@ String.prototype.replaceAll=function(f,t)
     return this.replace(reg,t); 
 }
 
-var conf = new IniConfigFile("./plugins/LlsePluginsData/EconomicSync/config.ini", "");
+var conf = new IniConfigFile("./plugins/EconomicSync/config.ini", "");
 logger.setTitle("EconomicSync");
 
 function CheckScoreboard()
@@ -102,7 +102,7 @@ function LLMoneyChange(xuid,newValue)
             changed = "[]";
 
         let arr = JSON.parse(changed);
-        let index =  arr.length == 0 ? -1 : arr.indexOf(pl.xuid);
+        let index =  arr.length == 0 ? -1 : arr.indexOf(xuid);
         if(index == -1)
         {
             //离线修改

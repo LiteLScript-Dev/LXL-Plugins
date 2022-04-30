@@ -282,8 +282,8 @@ const i18n = {
         return output;
     },
     reload() {
-        if (file.exists("./plugins/LlsePluginsData/BehaviorLog/i18n/" + conf["Language"] + ".json")) {
-            this.data = data.parseJson(File.readFrom("./plugins/LlsePluginsData/BehaviorLog/i18n/" + conf["Language"] + ".json"));
+        if (file.exists("./plugins/BehaviorLog/i18n/" + conf["Language"] + ".json")) {
+            this.data = data.parseJson(File.readFrom("./plugins/BehaviorLog/i18n/" + conf["Language"] + ".json"));
         }
     }
 };
