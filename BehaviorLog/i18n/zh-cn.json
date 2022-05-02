@@ -1,5 +1,5 @@
 {
-    "notify.versionTooOld":"\n\n【加载失败】LXL版本过旧！请升级你的LXL版本到0.5.3及以上再使用此插件\n",
+    "notify.versionTooOld":"\n\n【加载失败】LLSE版本过旧！请升级你的LL版本到0.5.3及以上再使用此插件\n",
     "notify.openError":"日志文件打开失败！\n行为日志将无法正常工作！",
     "common.time":"时间",
     "common.dim":"维度",
